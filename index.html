@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f6fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c1018" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CSM Calls">
+<meta name="robots" content="noindex">
+<title>CSM Calls</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root {
+  --bg: #f5f6fa; --card: #ffffff; --ink: #121722; --muted: #667085; --line: #e4e7ee;
+  --accent: #2f6fed; --accent-ink: #ffffff;
+  --yes: #1f9d63; --no: #d9434b; --warn: #c27a00; --warn-bg: #fff4dc;
+  --shadow: 0 1px 2px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c1018; --card: #151b26; --ink: #eef1f7; --muted: #8f99ab; --line: #232b3a;
+    --accent: #4c86ff; --accent-ink: #ffffff;
+    --yes: #33c27f; --no: #ff6168; --warn: #f2b13c; --warn-bg: #2d2412;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body {
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  min-height: 100vh;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent); }
+.wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 96px; }
+
+/* header */
+.top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 12px 0 10px; }
+.bar { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.bar h1 { font-size: 24px; margin: 0; flex: 1; letter-spacing: -.01em; }
+.bar h2 { font-size: 19px; margin: 0; flex: 1; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-btn { min-width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--accent); font-size: 17px; font-weight: 600; padding: 0 8px; }
+.icon-btn.round { background: var(--card); box-shadow: var(--shadow); border: 1px solid var(--line); font-size: 24px; line-height: 1; }
+.search { width: 100%; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); padding: 0 14px; margin-top: 8px; outline: none; }
+.search:focus { border-color: var(--accent); }
+
+/* client list */
+.list { display: flex; flex-direction: column; gap: 10px; }
+.row { display: block; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow); }
+.row:active { transform: scale(.99); }
+.row.flag { border-color: var(--warn); box-shadow: inset 4px 0 0 var(--warn); }
+.row-top { display: flex; align-items: baseline; gap: 8px; }
+.name { font-weight: 650; font-size: 17px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.spoke { font-weight: 600; margin-top: 2px; }
+.spoke.never { color: var(--no); }
+.lastcall { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.yes-t { color: var(--yes); font-weight: 600; }
+.no-t { color: var(--no); font-weight: 600; }
+.badge { display: inline-block; font-size: 12px; font-weight: 700; color: var(--warn); background: var(--warn-bg); border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.marks { display: flex; gap: 12px; margin-top: 10px; }
+.mk { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 30px; }
+.mk small { font-size: 11px; color: var(--muted); }
+.dot { width: 14px; height: 14px; border-radius: 50%; }
+.dot.y { background: var(--yes); }
+.dot.n { border: 2.5px solid var(--no); }
+.empty { text-align: center; color: var(--muted); padding: 48px 16px; }
+.empty .btn { margin-top: 12px; }
+
+/* detail */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; }
+.banner { background: var(--warn-bg); color: var(--warn); border-radius: 14px; padding: 12px 14px; font-weight: 600; margin-bottom: 12px; }
+.call-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 64px; border-radius: 18px; background: var(--yes); color: #fff; font-size: 20px; font-weight: 700; text-decoration: none; border: 0; margin-bottom: 12px; }
+.call-btn.off { background: var(--line); color: var(--muted); }
+.status-line { margin: 2px 0; }
+.kv { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.kv:first-child { border-top: 0; padding-top: 0; }
+.kv span { color: var(--muted); width: 64px; flex: none; font-size: 14px; padding-top: 1px; }
+.kv div { flex: 1; min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.section-title { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 20px 4px 8px; font-weight: 700; }
+.hist { width: 100%; display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; text-align: left; }
+.hist .when { flex: 1; }
+.hist .edit { color: var(--muted); font-size: 14px; }
+
+/* buttons, forms */
+.btn { display: inline-flex; align-items: center; justify-content: center; height: 48px; padding: 0 18px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); font-weight: 600; text-decoration: none; color: var(--ink); }
+.btn.block { width: 100%; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.danger { color: var(--no); }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+label.f { display: block; margin-bottom: 14px; }
+label.f > span { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+.input { width: 100%; min-height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); padding: 10px 14px; outline: none; }
+.input:focus { border-color: var(--accent); }
+textarea.input { min-height: 96px; resize: vertical; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.seg button { height: 52px; border-radius: 14px; border: 2px solid var(--line); background: var(--card); font-weight: 700; }
+.seg button.on.y { border-color: var(--yes); color: var(--yes); }
+.seg button.on.n { border-color: var(--no); color: var(--no); }
+.note { color: var(--muted); font-size: 14px; }
+.menu-item { display: block; width: 100%; text-align: left; padding: 15px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 8px; font-weight: 600; color: var(--ink); text-decoration: none; }
+.menu-item small { display: block; font-weight: 400; color: var(--muted); margin-top: 2px; }
+
+/* bottom sheet */
+.scrim { position: fixed; inset: 0; background: rgba(5,8,15,.45); z-index: 20; display: flex; align-items: flex-end; justify-content: center; animation: fade .15s ease-out; }
+.sheet { width: 100%; max-width: 560px; background: var(--card); border-radius: 22px 22px 0 0; padding: 22px 18px calc(18px + env(safe-area-inset-bottom)); animation: up .2s ease-out; max-height: 92vh; overflow: auto; }
+.sheet h3 { margin: 0 0 4px; font-size: 21px; text-align: center; }
+.sheet .sub { text-align: center; color: var(--muted); margin: 0 0 18px; }
+.big-yn { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.big-yn button { height: 92px; border: 0; border-radius: 20px; font-size: 24px; font-weight: 800; color: #fff; }
+.big-yn .y { background: var(--yes); }
+.big-yn .n { background: var(--no); }
+.link-btn { display: block; margin: 16px auto 0; background: none; border: 0; color: var(--muted); font-size: 15px; padding: 8px 12px; }
+@keyframes up { from { transform: translateY(30px); opacity: .6; } }
+@keyframes fade { from { opacity: 0; } }
+
+/* import */
+.preview { max-height: 46vh; overflow: auto; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 14px; background: var(--card); }
+.pv { display: flex; gap: 12px; align-items: flex-start; padding: 10px 14px; border-top: 1px solid var(--line); }
+.pv:first-child { border-top: 0; }
+.pv input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+.pv .meta { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.pv.dupe { opacity: .55; }
+
+/* tabs + agreements */
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 4px; margin-top: 8px; }
+.tabs button { height: 36px; border: 0; border-radius: 9px; background: transparent; font-weight: 600; color: var(--muted); }
+.tabs button.on { background: var(--accent); color: var(--accent-ink); }
+.ag-sum { color: var(--muted); font-size: 14px; margin: 2px 4px 4px; }
+.pill { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.pill.none { color: var(--muted); background: var(--bg); border: 1px solid var(--line); }
+.pill.sent { color: var(--warn); background: var(--warn-bg); }
+.pill.signed { color: var(--yes); background: color-mix(in srgb, var(--yes) 14%, transparent); }
+.warn-t { color: var(--warn); font-weight: 600; }
+.seg3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.seg3 button { height: 52px; border-radius: 14px; border: 2px solid var(--line); background: var(--card); font-weight: 700; font-size: 15px; }
+.seg3 button.on[data-st="none"] { border-color: var(--muted); }
+.seg3 button.on[data-st="sent"] { border-color: var(--warn); color: var(--warn); }
+.seg3 button.on[data-st="signed"] { border-color: var(--yes); color: var(--yes); }
+
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 14px; font-weight: 600; z-index: 30; max-width: calc(100% - 32px); text-align: center; animation: up .2s ease-out; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div id="layer"></div>
+<script>
+'use strict';
+/* ========== storage: everything lives in this browser's localStorage, on this device only ========== */
+const KEY = 'csm-calls-v1';
+const PENDING_KEY = 'csm-calls-pending';
+let db = load();
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && Array.isArray(d.clients)) return { clients: d.clients, calls: Array.isArray(d.calls) ? d.calls : [] };
+  } catch (e) {}
+  return { clients: [], calls: [] };
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch (e) { toast('Could not save. Phone storage may be full.'); }
+}
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = (sel, el = document) => el.querySelector(sel);
+const client = (id) => db.clients.find((c) => c.id === id);
+
+/* ========== dates ========== */
+const DAY = 864e5;
+const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+function ago(iso) {
+  const days = Math.round((startOfDay(new Date()) - startOfDay(new Date(iso))) / DAY);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 14) return days + ' days ago';
+  if (days < 60) return Math.floor(days / 7) + ' weeks ago';
+  if (days < 365) return Math.floor(days / 30) + ' months ago';
+  const y = Math.floor(days / 365);
+  return y + (y === 1 ? ' year ago' : ' years ago');
+}
+const shortDate = (iso) => { const d = new Date(iso); return (d.getMonth() + 1) + '/' + d.getDate(); };
+const longDate = (iso) => new Date(iso).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: new Date(iso).getFullYear() === new Date().getFullYear() ? undefined : 'numeric', hour: 'numeric', minute: '2-digit' });
+const pad = (n) => String(n).padStart(2, '0');
+const localDate = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const localTime = (d) => pad(d.getHours()) + ':' + pad(d.getMinutes());
+
+/* ========== per-client call summary ========== */
+function callsByClient() {
+  const map = new Map();
+  for (const c of db.calls) { if (!map.has(c.clientId)) map.set(c.clientId, []); map.get(c.clientId).push(c); }
+  for (const list of map.values()) list.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0)); // newest first
+  return map;
+}
+function summarize(cl, map) {
+  const calls = map.get(cl.id) || [];
+  let streak = 0;
+  for (const c of calls) { if (c.pickedUp) break; streak++; }
+  return { client: cl, calls, last: calls[0] || null, lastSpoke: calls.find((c) => c.pickedUp) || null, streak };
+}
+const t = (call) => (call ? Date.parse(call.at) : -Infinity);
+// longest without actually speaking first; never reached at the very top; ties: least recently tried first
+const byNeglect = (a, b) => (t(a.lastSpoke) - t(b.lastSpoke)) || (t(a.last) - t(b.last)) || a.client.name.localeCompare(b.client.name);
+
+/* ========== routing (history-based so the phone's back gesture works) ========== */
+function route() {
+  const h = location.hash.replace(/^#\/?/, '');
+  const [view, id] = h.split('/');
+  return { view: view || 'list', id: id ? decodeURIComponent(id) : null };
+}
+function go(path) { history.pushState({ d: ((history.state && history.state.d) || 0) + 1 }, '', '#/' + path); render(); }
+function back(fallback) {
+  if (history.state && history.state.d > 0) history.back();
+  else { history.replaceState({ d: 0 }, '', '#/' + (fallback || '')); render(); }
+}
+if (!history.state) history.replaceState({ d: 0 }, '', location.hash || '#/');
+window.addEventListener('popstate', () => { closeSheet(); render(); });
+
+/* ========== render ========== */
+let query = '';
+function render() {
+  const r = route();
+  const views = { list: () => viewList('calls'), agreements: () => viewList('agreements'), c: viewClient, new: () => viewForm(null), edit: () => viewForm(r.id), settings: viewSettings, import: viewImport };
+  (views[r.view] || viewList)(r.id);
+  window.scrollTo(0, 0);
+}
+
+function viewList(tab) {
+  const draw = tab === 'agreements' ? drawAgreements : drawList;
+  $('#app').innerHTML = `
+    <div class="top">
+      <div class="bar">
+        <h1>${tab === 'agreements' ? 'Agreements' : 'Clients'}</h1>
+        <button class="icon-btn round" aria-label="Settings" data-go="settings">⋯</button>
+        <button class="icon-btn round" aria-label="Add client" data-go="new">+</button>
+      </div>
+      <div class="tabs"><button data-tab="" class="${tab === 'agreements' ? '' : 'on'}">Calls</button><button data-tab="agreements" class="${tab === 'agreements' ? 'on' : ''}">Agreements</button></div>
+      <input class="search" id="q" type="search" placeholder="Search clients" autocomplete="off" value="${esc(query)}">
+    </div>
+    <div class="list" id="list"></div>`;
+  $('#q').addEventListener('input', (e) => { query = e.target.value; draw(); });
+  draw();
+}
+
+/* ========== service agreements ========== */
+const ag = (cl) => cl.agreement || { status: 'none' };
+const dayDate = (s) => new Date(s + 'T12:00'); // stored as a local YYYY-MM-DD
+function fmtDay(s) {
+  const d = dayDate(s);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
+}
+function agLine(cl) {
+  const a = ag(cl);
+  if (a.status === 'signed') return `<span class="yes-t">Signed${a.signedAt ? ' ' + fmtDay(a.signedAt) : ''}</span>`;
+  if (a.status === 'sent') return `<span class="warn-t">Sent${a.sentAt ? ' ' + fmtDay(a.sentAt) + ' (' + ago(dayDate(a.sentAt).toISOString()) + ')' : ''} · waiting to sign</span>`;
+  return '<span class="note">Not sent yet</span>';
+}
+function drawAgreements() {
+  const active = db.clients.filter((c) => !c.archived);
+  if (!active.length) { $('#list').innerHTML = `<div class="empty">No clients yet.</div>`; return; }
+  const q = query.trim().toLowerCase();
+  const shown = active.filter((c) => !q || c.name.toLowerCase().includes(q));
+  const of = (list, s) => list.filter((c) => ag(c).status === s);
+  const waiting = of(shown, 'sent').sort((a, b) => (ag(a).sentAt || '').localeCompare(ag(b).sentAt || '')); // longest waiting first
+  const notSent = of(shown, 'none').sort((a, b) => a.name.localeCompare(b.name));
+  const signed = of(shown, 'signed').sort((a, b) => (ag(b).signedAt || '').localeCompare(ag(a).signedAt || ''));
+  const row = (c, pill, pillText, line) => `<button class="row" data-agree="${esc(c.id)}">
+      <div class="row-top"><span class="name">${esc(c.name)}</span><span class="pill ${pill}">${pillText}</span></div>
+      ${line ? `<div class="lastcall">${line}</div>` : ''}</button>`;
+  const section = (title, list, html) => list.length ? `<div class="section-title">${title} (${list.length})</div>` + list.map(html).join('') : '';
+  const out =
+    `<div class="ag-sum">${of(active, 'sent').length} waiting to sign · ${of(active, 'none').length} not sent · ${of(active, 'signed').length} signed</div>` +
+    section('Waiting to sign', waiting, (c) => {
+      const a = ag(c); const old = a.sentAt && (Date.now() - dayDate(a.sentAt)) / DAY > 7;
+      return row(c, 'sent', 'Waiting', a.sentAt ? `<span class="${old ? 'warn-t' : ''}">Sent ${fmtDay(a.sentAt)} · ${ago(dayDate(a.sentAt).toISOString())}</span>` : 'Sent');
+    }) +
+    section('Not sent yet', notSent, (c) => row(c, 'none', 'Not sent', '')) +
+    section('Signed', signed, (c) => row(c, 'signed', 'Signed', ag(c).signedAt ? 'Signed ' + fmtDay(ag(c).signedAt) : ''));
+  $('#list').innerHTML = (waiting.length + notSent.length + signed.length) ? out : `<div class="empty">No client matches “${esc(query)}”.</div>`;
+}
+function openAgreement(id, fromList) {
+  const cl = client(id); if (!cl) return;
+  const a = ag(cl); let st = a.status || 'none';
+  const today = localDate(new Date());
+  openSheet(`
+    <h3>Service agreement</h3><p class="sub">${esc(cl.name)}</p>
+    <div class="seg3"><button data-st="none">Not sent</button><button data-st="sent">Sent</button><button data-st="signed">Signed</button></div>
+    <label class="f" id="sentWrap"><span>Sent on</span><input class="input" type="date" id="aSent" value="${esc(a.sentAt || today)}"></label>
+    <label class="f" id="signWrap"><span>Signed on</span><input class="input" type="date" id="aSigned" value="${esc(a.signedAt || today)}"></label>
+    <div class="stack"><button class="btn primary block" id="aSave">Save</button>
+    ${fromList ? `<button class="btn block" data-open-client="${esc(cl.id)}">Open client</button>` : ''}</div>
+    <button class="link-btn" id="aX">Cancel</button>`, (sheet) => {
+    const paint = () => {
+      sheet.querySelectorAll('[data-st]').forEach((b) => b.classList.toggle('on', b.dataset.st === st));
+      $('#sentWrap').style.display = st === 'none' ? 'none' : '';
+      $('#signWrap').style.display = st === 'signed' ? '' : 'none';
+    };
+    paint();
+    sheet.querySelectorAll('[data-st]').forEach((b) => (b.onclick = () => { st = b.dataset.st; paint(); }));
+    $('#aSave').onclick = () => {
+      if (st === 'none') cl.agreement = { status: 'none' };
+      else if (st === 'sent') cl.agreement = { status: 'sent', sentAt: $('#aSent').value || today };
+      else cl.agreement = { status: 'signed', sentAt: $('#aSent').value || '', signedAt: $('#aSigned').value || today };
+      save(); closeSheet(); toast(st === 'signed' ? 'Marked signed' : st === 'sent' ? 'Marked sent' : 'Marked not sent'); render();
+    };
+    $('#aX').onclick = closeSheet;
+  });
+}
+function drawList() {
+  const active = db.clients.filter((c) => !c.archived);
+  if (!active.length) {
+    $('#list').innerHTML = `<div class="empty">No clients yet.<br>
+      <a class="btn primary" href="#/import" data-go="import">Import from CSV</a>
+      <div style="margin-top:10px"><a class="btn" href="#/new" data-go="new">Add a client</a></div></div>`;
+    return;
+  }
+  const map = callsByClient();
+  const q = query.trim().toLowerCase();
+  const rows = active.filter((c) => !q || c.name.toLowerCase().includes(q)).map((c) => summarize(c, map)).sort(byNeglect);
+  if (!rows.length) { $('#list').innerHTML = `<div class="empty">No client matches “${esc(query)}”.</div>`; return; }
+  $('#list').innerHTML = rows.map(rowHTML).join('');
+}
+function rowHTML(s) {
+  const flag = s.streak >= 2;
+  const lastLine = s.last
+    ? `Last call ${ago(s.last.at)} · ${s.last.pickedUp ? '<span class="yes-t">picked up</span>' : '<span class="no-t">no pickup</span>'}`
+    : 'No calls yet';
+  const marks = s.calls.slice(0, 5).reverse().map((c) =>
+    `<span class="mk" title="${c.pickedUp ? 'Picked up' : 'No pickup'} ${esc(longDate(c.at))}"><i class="dot ${c.pickedUp ? 'y' : 'n'}"></i><small>${shortDate(c.at)}</small></span>`).join('');
+  return `<button class="row${flag ? ' flag' : ''}" data-go="c/${esc(s.client.id)}">
+    <div class="row-top"><span class="name">${esc(s.client.name)}</span>${flag ? `<span class="badge">${s.streak} no-pickups · email</span>` : ''}</div>
+    ${s.lastSpoke ? `<div class="spoke">Last spoke ${ago(s.lastSpoke.at)}</div>` : `<div class="spoke never">Never reached</div>`}
+    <div class="lastcall">${lastLine}</div>
+    ${marks ? `<div class="marks">${marks}</div>` : ''}
+  </button>`;
+}
+
+function telHref(phone) { const p = String(phone || '').replace(/[^\d+]/g, ''); return p ? 'tel:' + p : ''; }
+
+function viewClient(id) {
+  const cl = client(id);
+  if (!cl) return back();
+  const s = summarize(cl, callsByClient());
+  const tel = telHref(cl.phone);
+  $('#app').innerHTML = `
+    <div class="top"><div class="bar">
+      <button class="icon-btn" data-back>‹ Back</button>
+      <h2>${esc(cl.name)}</h2>
+      <button class="icon-btn" data-go="edit/${esc(cl.id)}">Edit</button>
+    </div></div>
+    ${cl.archived ? `<div class="banner">This client is archived. Restore them from Edit.</div>` : ''}
+    ${s.streak >= 2 ? `<div class="banner">${s.streak} no-pickups in a row. Try an email instead.${cl.email ? ` <a href="mailto:${esc(cl.email)}">${esc(cl.email)}</a>` : ''}</div>` : ''}
+    ${tel ? `<a class="call-btn" href="${esc(tel)}" data-call="${esc(cl.id)}">📞 Call</a>`
+          : `<button class="call-btn off" data-go="edit/${esc(cl.id)}">Add a phone number to call</button>`}
+    <div class="card">
+      ${s.lastSpoke ? `<div class="status-line spoke">Last spoke ${ago(s.lastSpoke.at)}</div>` : `<div class="status-line spoke never">Never reached</div>`}
+      <div class="status-line lastcall">${s.last ? `Last call ${ago(s.last.at)} · ${s.last.pickedUp ? '<span class="yes-t">picked up</span>' : '<span class="no-t">no pickup</span>'}` : 'No calls yet'}</div>
+    </div>
+    <button class="hist" data-agree="${esc(cl.id)}" style="margin-bottom:12px">
+      <span class="when"><b>Service agreement</b><br>${agLine(cl)}</span><span class="edit">Update</span>
+    </button>
+    <div class="card">
+      ${kv('Phone', cl.phone ? `<a href="${esc(tel)}" data-call="${esc(cl.id)}">${esc(cl.phone)}</a>` : '<span class="note">None</span>')}
+      ${kv('Email', cl.email ? `<a href="mailto:${esc(cl.email)}">${esc(cl.email)}</a>` : '<span class="note">None</span>')}
+      ${cl.loom ? kv('Loom', `<a href="${esc(safeUrl(cl.loom))}" target="_blank" rel="noopener">Open Loom</a>`) : ''}
+      ${cl.notes ? kv('Notes', esc(cl.notes)) : ''}
+    </div>
+    <button class="btn block" data-log="${esc(cl.id)}">Log a call manually</button>
+    ${s.calls.length ? `<div class="section-title">Call history</div>` + s.calls.map((c) => `
+      <button class="hist" data-editcall="${esc(c.id)}">
+        <i class="dot ${c.pickedUp ? 'y' : 'n'}"></i>
+        <span class="when">${esc(longDate(c.at))}<br><span class="${c.pickedUp ? 'yes-t' : 'no-t'}">${c.pickedUp ? 'Picked up' : 'No pickup'}</span></span>
+        <span class="edit">Edit</span>
+      </button>`).join('') : ''}`;
+}
+const kv = (k, v) => `<div class="kv"><span>${k}</span><div>${v}</div></div>`;
+const safeUrl = (u) => (/^https?:\/\//i.test(u) ? u : 'https://' + u);
+
+function viewForm(id) {
+  const cl = id ? client(id) : null;
+  if (id && !cl) return back();
+  const v = cl || { name: '', phone: '', email: '', loom: '', notes: '' };
+  $('#app').innerHTML = `
+    <div class="top"><div class="bar">
+      <button class="icon-btn" data-back>Cancel</button>
+      <h2>${cl ? 'Edit client' : 'New client'}</h2>
+      <button class="icon-btn" id="saveTop">Save</button>
+    </div></div>
+    <form id="f" class="card" autocomplete="off">
+      <label class="f"><span>Name</span><input class="input" name="name" required value="${esc(v.name)}" placeholder="Company or contact"></label>
+      <label class="f"><span>Phone</span><input class="input" name="phone" type="tel" inputmode="tel" value="${esc(v.phone)}" placeholder="(555) 123-4567"></label>
+      <label class="f"><span>Email</span><input class="input" name="email" type="email" inputmode="email" value="${esc(v.email)}"></label>
+      <label class="f"><span>Loom link (optional)</span><input class="input" name="loom" type="url" inputmode="url" value="${esc(v.loom)}" placeholder="https://www.loom.com/share/…"></label>
+      <label class="f" style="margin-bottom:0"><span>Notes (optional)</span><textarea class="input" name="notes">${esc(v.notes)}</textarea></label>
+    </form>
+    <div class="stack">
+      <button class="btn primary block" id="saveBtn">Save</button>
+      ${cl ? `<button class="btn block ${cl.archived ? '' : 'danger'}" id="archBtn">${cl.archived ? 'Restore client' : 'Archive client'}</button>` : ''}
+    </div>`;
+  const submit = () => {
+    const f = $('#f');
+    const data = Object.fromEntries(['name', 'phone', 'email', 'loom', 'notes'].map((k) => [k, f.elements[k].value.trim()]));
+    if (!data.name) { f.elements.name.focus(); return toast('Add a name'); }
+    if (cl) Object.assign(cl, data);
+    else db.clients.push({ id: uid(), ...data, archived: false, createdAt: new Date().toISOString() });
+    save();
+    toast(cl ? 'Saved' : 'Client added');
+    back();
+  };
+  $('#saveBtn').onclick = submit; $('#saveTop').onclick = submit;
+  $('#f').onsubmit = (e) => { e.preventDefault(); submit(); };
+  if (cl) $('#archBtn').onclick = () => {
+    cl.archived = !cl.archived; save();
+    toast(cl.archived ? 'Archived. Restore it from Settings.' : 'Restored');
+    if (cl.archived) { history.replaceState({ d: 0 }, '', '#/'); render(); } else back();
+  };
+  if (!cl) setTimeout(() => $('#f').elements.name.focus(), 50);
+}
+
+function viewSettings() {
+  const archived = db.clients.filter((c) => c.archived);
+  $('#app').innerHTML = `
+    <div class="top"><div class="bar">
+      <button class="icon-btn" data-back>‹ Back</button><h2>Settings</h2><span style="width:64px"></span>
+    </div></div>
+    <p class="note" style="margin:4px 4px 16px">Your clients and calls are saved only on this phone. Export a backup every so often so nothing is lost if the phone is reset.</p>
+    <button class="menu-item" data-go="import">Import clients from CSV<small>Bring in your Google Sheet. You'll see a preview first.</small></button>
+    <button class="menu-item" id="expClients">Export clients (CSV)</button>
+    <button class="menu-item" id="expCalls">Export calls (CSV)</button>
+    <button class="menu-item" id="backup">Back up everything<small>One file you can restore later.</small></button>
+    <label class="menu-item">Restore from backup<small>Replaces everything on this phone.</small><input type="file" id="restore" accept=".json,application/json" hidden></label>
+    <div class="section-title">Archived clients (${archived.length})</div>
+    ${archived.length ? archived.map((c) => `<button class="menu-item" data-go="c/${esc(c.id)}">${esc(c.name)}<small>Tap, then Edit to restore</small></button>`).join('') : '<p class="note" style="margin:0 4px">None</p>'}`;
+  $('#expClients').onclick = () => shareFile('csm-clients-' + localDate(new Date()) + '.csv', toCSV([
+    ['name', 'phone', 'email', 'loom', 'notes', 'archived', 'agreement', 'agreement_sent', 'agreement_signed'],
+    ...db.clients.map((c) => { const a = ag(c); return [c.name, c.phone, c.email, c.loom, c.notes, c.archived ? 'yes' : 'no', { none: 'not sent', sent: 'sent', signed: 'signed' }[a.status] || 'not sent', a.sentAt || '', a.signedAt || '']; })]), 'text/csv');
+  $('#expCalls').onclick = () => {
+    const names = new Map(db.clients.map((c) => [c.id, c.name]));
+    const rows = [...db.calls].sort((a, b) => (a.at < b.at ? 1 : -1)).map((c) => { const d = new Date(c.at); return [names.get(c.clientId) || '(deleted)', localDate(d), localTime(d), c.pickedUp ? 'yes' : 'no']; });
+    shareFile('csm-calls-' + localDate(new Date()) + '.csv', toCSV([['client', 'date', 'time', 'picked_up'], ...rows]), 'text/csv');
+  };
+  $('#backup').onclick = () => shareFile('csm-calls-backup-' + localDate(new Date()) + '.json', JSON.stringify({ app: 'csm-calls', version: 1, exportedAt: new Date().toISOString(), ...db }, null, 1), 'application/json');
+  $('#restore').onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      const d = JSON.parse(await file.text());
+      if (!d || !Array.isArray(d.clients) || !Array.isArray(d.calls)) throw new Error('bad');
+      if (!confirm(`Replace everything on this phone with this backup (${d.clients.length} clients, ${d.calls.length} calls)?`)) return;
+      db = { clients: d.clients, calls: d.calls }; save(); toast('Backup restored'); render();
+    } catch (err) { toast("That file isn't a CSM Calls backup"); }
+    e.target.value = '';
+  };
+}
+
+/* ========== files ========== */
+function toCSV(rows) {
+  return rows.map((r) => r.map((v) => { const s = String(v == null ? '' : v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(',')).join('\r\n');
+}
+async function shareFile(name, text, type) {
+  const blob = new Blob([text], { type });
+  try {
+    const file = new File([blob], name, { type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function parseCSV(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  text = text.replace(/^﻿/, '');
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === ',') { row.push(cell); cell = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += ch;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows.map((r) => r.map((c) => c.trim())).filter((r) => r.some((c) => c !== ''));
+}
+
+/* ========== CSV import (preview first, nothing saved until you confirm) ========== */
+let imp = null;
+const FIELDS = [['name', 'Name'], ['phone', 'Phone'], ['email', 'Email'], ['loom', 'Loom link'], ['notes', 'Notes']];
+const GUESS = { name: /name|client|company|account|business/i, phone: /phone|mobile|cell|tel|number/i, email: /e-?mail/i, loom: /loom/i, notes: /note|comment/i };
+
+function viewImport() {
+  $('#app').innerHTML = `
+    <div class="top"><div class="bar">
+      <button class="icon-btn" data-back>‹ Back</button><h2>Import clients</h2><span style="width:64px"></span>
+    </div></div>
+    <p class="note" style="margin:4px 4px 14px">In Google Sheets: File › Download › Comma-separated values (.csv). Then pick that file here.</p>
+    <label class="btn primary block" style="margin-bottom:16px">Choose CSV file<input type="file" id="csv" accept=".csv,text/csv,text/plain" hidden></label>
+    <div id="impBody"></div>`;
+  $('#csv').onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const rows = parseCSV(await file.text());
+    if (!rows.length) { imp = null; $('#impBody').innerHTML = '<p class="note">That file looks empty.</p>'; return; }
+    const head = rows[0];
+    const map = {};
+    for (const [k] of FIELDS) { const i = head.findIndex((h) => GUESS[k].test(h)); map[k] = i; }
+    const looksLikeHeader = map.name >= 0 || map.phone >= 0;
+    imp = { rows, mode: looksLikeHeader ? 'rows' : 'across', map: looksLikeHeader ? map : { name: 0, phone: -1, email: -1, loom: -1, notes: -1 }, nameRow: 0, skip: new Set() };
+    drawImport();
+  };
+  if (imp) drawImport();
+}
+function importCandidates() {
+  const out = []; const seen = new Set();
+  const existing = new Map(db.clients.map((c) => [c.name.toLowerCase(), c]));
+  const add = (o) => {
+    if (!o.name) return; const k = o.name.toLowerCase(); if (seen.has(k)) return; seen.add(k);
+    const ex = existing.get(k);
+    // an existing client is only offered when the file has details it's missing (they get filled in, nothing is overwritten)
+    const fills = ex ? ['phone', 'email', 'loom', 'notes'].filter((f) => o[f] && !ex[f]) : [];
+    out.push({ ...o, dupe: !!ex, existing: ex, fills });
+  };
+  if (imp.mode === 'rows') {
+    const m = imp.map;
+    const cell = (r, k) => (m[k] >= 0 ? (r[m[k]] || '') : '');
+    for (const r of imp.rows.slice(1)) add({ name: cell(r, 'name'), phone: cell(r, 'phone'), email: cell(r, 'email'), loom: cell(r, 'loom'), notes: cell(r, 'notes') });
+  } else {
+    // client names run across one row (one column per client); pick up the first Loom link found under each name
+    const header = imp.rows[imp.nameRow] || [];
+    header.forEach((nm, col) => {
+      let loom = '';
+      for (const r of imp.rows.slice(imp.nameRow + 1)) { const v = r[col] || ''; const mm = v.match(/https?:\/\/(www\.)?loom\.com\/\S+/i); if (mm) { loom = mm[0]; break; } }
+      add({ name: nm, phone: '', email: '', loom, notes: '' });
+    });
+  }
+  return out;
+}
+function drawImport() {
+  const head = imp.rows[0];
+  const colOpts = (sel) => `<option value="-1">(none)</option>` + head.map((h, i) => `<option value="${i}"${i === sel ? ' selected' : ''}>${esc(h || 'Column ' + (i + 1))}</option>`).join('');
+  const cands = importCandidates();
+  const usable = (c) => !c.dupe || c.fills.length;
+  const picked = cands.filter((c) => usable(c) && !imp.skip.has(c.name.toLowerCase()));
+  const nNew = picked.filter((c) => !c.dupe).length, nFill = picked.length - nNew;
+  const label = [nNew ? `Import ${nNew} new client${nNew === 1 ? '' : 's'}` : '', nFill ? `${nNew ? 'update' : 'Update'} ${nFill}` : ''].filter(Boolean).join(', ') || 'Nothing to import';
+  $('#impBody').innerHTML = `
+    <div class="card">
+      <label class="f"><span>How is your sheet laid out?</span>
+        <select class="input" id="mode">
+          <option value="rows"${imp.mode === 'rows' ? ' selected' : ''}>One client per row</option>
+          <option value="across"${imp.mode === 'across' ? ' selected' : ''}>Client names across one row</option>
+        </select></label>
+      ${imp.mode === 'rows'
+        ? FIELDS.map(([k, label]) => `<label class="f"><span>${label} column</span><select class="input" data-map="${k}">${colOpts(imp.map[k])}</select></label>`).join('')
+        : `<label class="f" style="margin-bottom:0"><span>Row with the client names</span><select class="input" id="nameRow">${imp.rows.slice(0, 8).map((r, i) => `<option value="${i}"${i === imp.nameRow ? ' selected' : ''}>Row ${i + 1}: ${esc(r.filter(Boolean).slice(0, 3).join(', '))}${r.filter(Boolean).length > 3 ? '…' : ''}</option>`).join('')}</select></label>
+           <p class="note" style="margin:10px 0 0">Phone numbers aren't in this layout. Add them per client after importing.</p>`}
+    </div>
+    <div class="section-title">Preview · ${picked.length} selected</div>
+    ${cands.length ? `<div class="preview">${cands.map((c) => `
+      <label class="pv${usable(c) ? '' : ' dupe'}">
+        <input type="checkbox" data-skip="${esc(c.name.toLowerCase())}" ${!usable(c) ? 'disabled' : imp.skip.has(c.name.toLowerCase()) ? '' : 'checked'}>
+        <div><div>${esc(c.name)}${c.dupe ? ` <span class="note">· already added${c.fills.length ? ', adds ' + c.fills.join(', ') : ''}</span>` : ''}</div>
+        <div class="meta">${[c.phone, c.email, c.loom ? 'Loom link' : '', c.notes].filter(Boolean).map(esc).join(' · ')}</div></div>
+      </label>`).join('')}</div>` : '<p class="note">No client names found. Try another column or layout.</p>'}
+    <button class="btn primary block" id="doImport" ${picked.length ? '' : 'disabled'}>${label}</button>`;
+  $('#mode').onchange = (e) => { imp.mode = e.target.value; imp.skip.clear(); drawImport(); };
+  document.querySelectorAll('[data-map]').forEach((s) => (s.onchange = () => { imp.map[s.dataset.map] = +s.value; drawImport(); }));
+  if ($('#nameRow')) $('#nameRow').onchange = (e) => { imp.nameRow = +e.target.value; imp.skip.clear(); drawImport(); };
+  document.querySelectorAll('[data-skip]').forEach((cb) => (cb.onchange = () => { cb.checked ? imp.skip.delete(cb.dataset.skip) : imp.skip.add(cb.dataset.skip); drawImport(); }));
+  $('#doImport').onclick = () => {
+    const now = new Date().toISOString();
+    for (const c of picked) {
+      if (c.existing) for (const f of c.fills) c.existing[f] = c[f];
+      else db.clients.push({ id: uid(), name: c.name, phone: c.phone, email: c.email, loom: c.loom, notes: c.notes, archived: false, createdAt: now });
+    }
+    save(); imp = null; toast([nNew ? `Imported ${nNew}` : '', nFill ? `updated ${nFill}` : ''].filter(Boolean).join(', '));
+    history.replaceState({ d: 0 }, '', '#/'); render();
+  };
+}
+
+/* ========== bottom sheets ========== */
+function openSheet(html, onMount) {
+  $('#layer').innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+  $('#scrim').addEventListener('click', (e) => { if (e.target.id === 'scrim') closeSheet(); });
+  if (onMount) onMount($('#layer .sheet'));
+}
+function closeSheet() { $('#layer').innerHTML = ''; promptOpen = false; }
+
+function logCall(clientId, pickedUp, at) {
+  db.calls.push({ id: uid(), clientId, at: at || new Date().toISOString(), pickedUp: !!pickedUp });
+  save();
+}
+
+/* "Did they pick up?" — shown when you come back to the app after tapping Call */
+let promptOpen = false;
+function readPending() { try { return JSON.parse(localStorage.getItem(PENDING_KEY)); } catch (e) { return null; } }
+function clearPending() { localStorage.removeItem(PENDING_KEY); }
+function checkPending() {
+  if (document.visibilityState !== 'visible' || promptOpen) return;
+  const p = readPending(); if (!p) return;
+  const age = Date.now() - p.t;
+  if (age < 1500) return; // still on the screen right after tapping Call
+  const cl = client(p.id);
+  if (!cl || age > 12 * 3600e3) return clearPending();
+  promptOpen = true;
+  openSheet(`
+    <h3>Did ${esc(cl.name)} pick up?</h3>
+    <p class="sub">Logs the call for right now.</p>
+    <div class="big-yn"><button class="y" id="pY">Yes</button><button class="n" id="pN">No</button></div>
+    <button class="link-btn" id="pX">I didn't call</button>`, () => {
+    const done = (v) => {
+      clearPending();
+      if (v !== null) { logCall(cl.id, v, new Date().toISOString()); toast(v ? 'Logged · picked up' : 'Logged · no pickup'); }
+      closeSheet(); render();
+    };
+    $('#pY').onclick = () => done(true);
+    $('#pN').onclick = () => done(false);
+    $('#pX').onclick = () => done(null);
+  });
+}
+document.addEventListener('visibilitychange', checkPending);
+window.addEventListener('focus', checkPending);
+window.addEventListener('pageshow', checkPending);
+
+/* manual log: pick a date, then tap Picked up / No pickup */
+function openManualLog(clientId) {
+  const cl = client(clientId);
+  openSheet(`
+    <h3>Log a call</h3><p class="sub">${esc(cl.name)}</p>
+    <label class="f"><span>Date</span><input class="input" type="date" id="mDate" value="${localDate(new Date())}" max="${localDate(new Date())}"></label>
+    <div class="seg"><button class="on y" id="mY">Picked up</button><button class="on n" id="mN">No pickup</button></div>
+    <button class="link-btn" id="mX">Cancel</button>`, () => {
+    const done = (v) => {
+      const d = $('#mDate').value || localDate(new Date());
+      const today = d === localDate(new Date());
+      const at = today ? new Date() : new Date(d + 'T12:00');
+      logCall(clientId, v, at.toISOString()); closeSheet(); toast('Call logged'); render();
+    };
+    $('#mY').onclick = () => done(true);
+    $('#mN').onclick = () => done(false);
+    $('#mX').onclick = closeSheet;
+  });
+}
+
+/* edit or delete one logged call */
+function openEditCall(callId) {
+  const call = db.calls.find((c) => c.id === callId); if (!call) return;
+  const d = new Date(call.at); let picked = call.pickedUp;
+  openSheet(`
+    <h3>Edit call</h3><p class="sub">${esc((client(call.clientId) || {}).name || '')}</p>
+    <div class="seg" style="margin-bottom:14px"><button class="y" id="eY">Picked up</button><button class="n" id="eN">No pickup</button></div>
+    <div class="seg"><label class="f"><span>Date</span><input class="input" type="date" id="eDate" value="${localDate(d)}"></label>
+    <label class="f"><span>Time</span><input class="input" type="time" id="eTime" value="${localTime(d)}"></label></div>
+    <div class="stack"><button class="btn primary block" id="eSave">Save</button><button class="btn danger block" id="eDel">Delete call</button></div>
+    <button class="link-btn" id="eX">Cancel</button>`, () => {
+    const paint = () => { $('#eY').classList.toggle('on', picked); $('#eN').classList.toggle('on', !picked); };
+    paint();
+    $('#eY').onclick = () => { picked = true; paint(); };
+    $('#eN').onclick = () => { picked = false; paint(); };
+    $('#eSave').onclick = () => {
+      const nd = new Date(($('#eDate').value || localDate(d)) + 'T' + ($('#eTime').value || '12:00'));
+      if (isNaN(nd)) return toast('Pick a valid date');
+      call.at = nd.toISOString(); call.pickedUp = picked; save(); closeSheet(); toast('Call updated'); render();
+    };
+    $('#eDel').onclick = () => {
+      if (!confirm('Delete this call?')) return;
+      db.calls = db.calls.filter((c) => c.id !== callId); save(); closeSheet(); toast('Call deleted'); render();
+    };
+    $('#eX').onclick = closeSheet;
+  });
+}
+
+/* ========== taps ========== */
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-go],[data-back],[data-call],[data-log],[data-editcall],[data-agree],[data-tab],[data-open-client]');
+  if (!el) return;
+  if (el.dataset.agree) { e.preventDefault(); return openAgreement(el.dataset.agree, !!el.closest('#list')); }
+  if ('tab' in el.dataset) { e.preventDefault(); history.replaceState(history.state, '', '#/' + el.dataset.tab); return render(); }
+  if (el.dataset.openClient) { e.preventDefault(); closeSheet(); return go('c/' + el.dataset.openClient); }
+  if (el.dataset.call) { // let the tel: link open the dialer; remember who we're calling
+    localStorage.setItem(PENDING_KEY, JSON.stringify({ id: el.dataset.call, t: Date.now() }));
+    return;
+  }
+  e.preventDefault();
+  if (el.dataset.go) go(el.dataset.go);
+  else if ('back' in el.dataset) back();
+  else if (el.dataset.log) openManualLog(el.dataset.log);
+  else if (el.dataset.editcall) openEditCall(el.dataset.editcall);
+});
+
+let toastTimer;
+function toast(msg) {
+  document.querySelectorAll('.toast').forEach((t) => t.remove());
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), 2200);
+}
+
+render();
+checkPending();
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

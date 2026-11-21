@@ -1,6 +1,6 @@
 // Lets CSM Calls open with no signal. Only the app's own files are cached; your clients and calls
 // live in the phone's local storage and never go through here.
-const CACHE = "csm-calls-v2";
+const CACHE = "csm-calls-v3";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", (e) => {

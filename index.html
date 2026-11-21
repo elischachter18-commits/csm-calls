@@ -319,7 +319,8 @@ function drawList() {
   const active = db.clients.filter((c) => !c.archived);
   if (!active.length) {
     $('#list').innerHTML = `<div class="empty">No clients yet.<br>
-      <a class="btn primary" href="#/import" data-go="import">Import from CSV</a>
+      <button class="btn primary" data-starter>Load my clients</button>
+      <div style="margin-top:10px"><a class="btn" href="#/import" data-go="import">Import from CSV</a></div>
       <div style="margin-top:10px"><a class="btn" href="#/new" data-go="new">Add a client</a></div></div>`;
     return;
   }
@@ -433,6 +434,7 @@ function viewSettings() {
       <button class="icon-btn" data-back>‹ Back</button><h2>Settings</h2><span style="width:64px"></span>
     </div></div>
     <p class="note" style="margin:4px 4px 16px">Your clients and calls are saved only on this phone. Export a backup every so often so nothing is lost if the phone is reset.</p>
+    <button class="menu-item" data-starter>Load my clients<small>Adds your client list with the code. Never duplicates anyone.</small></button>
     <button class="menu-item" data-go="import">Import clients from CSV<small>Bring in your Google Sheet. You'll see a preview first.</small></button>
     <button class="menu-item" id="expClients">Export clients (CSV)</button>
     <button class="menu-item" id="expCalls">Export calls (CSV)</button>
@@ -587,6 +589,56 @@ function drawImport() {
   };
 }
 
+/* ========== "Load my clients": Eli's client list, encrypted so the public page doesn't reveal it ========== */
+const STARTER = {
+  salt: 'e0160acc691f1dd817e0da15b24fb78b',
+  iv: '15cedc9b5ba228dab0c2ca05',
+  data:
+    '81593c12886e7852aeff2570b0df8e89db26d7d96a27e9e211a1c9e50c61fc98e7498621f68b6abd4175bd2889e7e3c8c06c0833e0e8614543f599067499cb97b89a8d2c804d2da5a584761c267383de7d0b01445b483377d19942bd0c497067246a17d6c3ea6f55898087dbd98b2450342ea4d71feaea24d776cc2ea3c38d4a263fc101a5ee96b4066e5ffcbbca5efbe6d3abc2374dc0fd984c66e0b109d7e207222ef33dc2552e14e8cf672e8f57c06d40297ba6b1059a902f35464ad1ff0b11c1bb39bc9a0972bb5806399b59bd0ba8d6e877721ea6d337a40596994d3155ea5dfa2f00814bb2d29f70f51c385aa3052dab02a8153b75753a649e59170159ca8e3cd6ceea6bbd40352248afaf894e1cb23b18da38757f1b086a863c2cff1958ee5419135cc18e711087dd' +
+    'ed8bf6dfb0a53dc2f6b78f4e4b148e97409d0386d6c6f97148a0ec63d6edc973d8bf1045e20a7b8461ad9124e0bf782d0b67a5275735380ef75de318829cc68132519df99fdb663429309b15ed4472d978ba4505f0bb9589b9cd4b076b92f8b4d4a674af115b1be9991e6e714f88f6747dd305ee47edef17755f9c0873728404f5ccd4153bb7ce2cc06c36b2a3a861e7f8332947d0f5f5e224a3461aa50b8566d1301c0fc0e4f9812e8f048c46c82962fcce78db7dc99f5e341723107278ee2429a711963601bfbadb5682ef7994bbbe0f5cedfbd7fc4de6e76bc67f5f4e67ed674ff9fd0c450c9de9d7d4553ed2c0ee4cb13c5b4d6bbc7d701b1a04c5b8af57c52cbfe44124173e703105ebafda7ed3b590af5288bc6ea2b8290e71e8a5d699f38c48ef332f19a208baffdd' +
+    'ff29078b8188c33518787ba0f7e2e5ba450a2d0f9cfcf6e22d3ae42e6bafcc695e3de19ca6f8448daa77ffa9a11d53d12755758820d0dae7fc4757f3a7c9eef8eb39fe3bfd778d63e23d7f46dd390a971a9f5bf07bd0a1b932c6d6e46d268164ca315b7f6ff5f421abea4a9e294a0b8882fd4a5525d5edc4214e610c82cbe95c1e3b373b617b9a95f9df941cd5bf5735caac82ed33471444fc65b93524f02d2c1b173fe50e0eccf110402da9ef19bff614daab46e46dd54d4a75c523104cfc3920645e61c03bedf5af048da8819cc39e7dad792080d35c65985a76a2061a2df55d47573ca86453a4d1d1acb093df1f170e7a94313aa6827aabd55e694bfda02b35003b06235ef00df64ce4c28833ad0ba86d1c7e512a27d148b9ddf8f3b4986163dfe1eb07645dfe701b9ee3' +
+    '75fb544cdfcd85f46de2b514aa7471bc0ab842c6d0b8f2bd7348b62520d8089f4f07004a9f7c40d0e93942393714d411e09052eb488061ecae7532cb9d78d0ad27bdfbc90d018b60c2f594b3cf92e6f186764901e2a67ea86ee17268320fb9c59594d85db8f1e5057f7cb3dd18421bb069fb15538d0793f5964f341e175891cf04a09d64b1822a20223904b588d297d8d3d6e9fb83515dbc9a2fe657abb43e550b501eb2cf37380cc5e2c7fce59adb06e8e6e33b4cfaba1a544f856d4b9e623e867973461c982e6188ffd809b1f7fea2e2d03f49ef8f38db774153ebf75385f45c62866e93e05a8b15b5516e03b39a0f3396d206f1258372ff50b4d88d29b835efeb824bce4263d294d210293bf7d28270d467d1a35db7e7f9d88f0347eb0273a23f33fc818d694cf3204c11' +
+    '7f4198bad7ccc8c91ee7217789232b7f238386f6f0fbb65763eb4e7d21855544bdf331acba02988e33668e4d647b7a4b2c0dabd73b7fcf8fa9398c4383977709feafc5d7d724f9e19d9231bbfc6caede883daf9c32c3e48c53006fbd8c8d3c16af204da376e133cdb968f7695dcc5d1c09d496e5c3e0cf5bbdc398f0a885b6d2c7bf2ebecb651b440fb70ad77999e85247844f4db048ae58f1b550d26cb1e823d7827048b8096aa0b036e052383dddb9b0a5a3fde6cfff5544e54bccdb7eff55e715b327d4',
+};
+const unhex = (h) => new Uint8Array(h.match(/../g).map((b) => parseInt(b, 16)));
+async function unlockStarter(code) {
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(code.trim().toLowerCase()), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: unhex(STARTER.salt), iterations: 250000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unhex(STARTER.iv) }, key, unhex(STARTER.data));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+// adds clients you don't have yet; for ones you do, only fills in blank phone/email/Loom/notes
+function mergeClients(list) {
+  let added = 0, updated = 0; const now = new Date().toISOString();
+  for (const c of list) {
+    const ex = db.clients.find((x) => x.name.toLowerCase() === String(c.name).toLowerCase());
+    if (!ex) { db.clients.push({ id: uid(), name: c.name, phone: c.phone || '', email: c.email || '', loom: c.loom || '', notes: c.notes || '', archived: false, createdAt: now }); added++; continue; }
+    const fills = ['phone', 'email', 'loom', 'notes'].filter((f) => c[f] && !ex[f]);
+    fills.forEach((f) => (ex[f] = c[f])); if (fills.length) updated++;
+  }
+  save(); return { added, updated };
+}
+function openStarter() {
+  openSheet(`
+    <h3>Load my clients</h3><p class="sub">Type the code Claude gave you. You only do this once.</p>
+    <label class="f"><span>Code</span><input class="input" id="sCode" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="10 letters and numbers"></label>
+    <div class="stack"><button class="btn primary block" id="sGo">Load clients</button></div>
+    <button class="link-btn" id="sX">Cancel</button>`, () => {
+    const go = async () => {
+      const btn = $('#sGo'); btn.disabled = true; btn.textContent = 'Loading…';
+      try {
+        const r = mergeClients(await unlockStarter($('#sCode').value));
+        closeSheet(); toast(r.added || r.updated ? `Added ${r.added} client${r.added === 1 ? '' : 's'}${r.updated ? `, updated ${r.updated}` : ''}` : 'Your clients are already loaded');
+        history.replaceState({ d: 0 }, '', '#/'); render();
+      } catch (e) { btn.disabled = false; btn.textContent = 'Load clients'; toast("That code didn't work. Check it and try again."); }
+    };
+    $('#sGo').onclick = go;
+    $('#sCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    $('#sX').onclick = closeSheet;
+    setTimeout(() => $('#sCode').focus(), 50);
+  });
+}
+
 /* ========== bottom sheets ========== */
 function openSheet(html, onMount) {
   $('#layer').innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
@@ -681,8 +733,9 @@ function openEditCall(callId) {
 
 /* ========== taps ========== */
 document.addEventListener('click', (e) => {
-  const el = e.target.closest('[data-go],[data-back],[data-call],[data-log],[data-editcall],[data-agree],[data-tab],[data-open-client]');
+  const el = e.target.closest('[data-go],[data-back],[data-call],[data-log],[data-editcall],[data-agree],[data-tab],[data-open-client],[data-starter]');
   if (!el) return;
+  if ('starter' in el.dataset) { e.preventDefault(); return openStarter(); }
   if (el.dataset.agree) { e.preventDefault(); return openAgreement(el.dataset.agree, !!el.closest('#list')); }
   if ('tab' in el.dataset) { e.preventDefault(); history.replaceState(history.state, '', '#/' + el.dataset.tab); return render(); }
   if (el.dataset.openClient) { e.preventDefault(); closeSheet(); return go('c/' + el.dataset.openClient); }

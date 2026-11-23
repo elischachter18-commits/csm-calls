@@ -319,8 +319,7 @@ function drawList() {
   const active = db.clients.filter((c) => !c.archived);
   if (!active.length) {
     $('#list').innerHTML = `<div class="empty">No clients yet.<br>
-      <button class="btn primary" data-starter>Load my clients</button>
-      <div style="margin-top:10px"><a class="btn" href="#/import" data-go="import">Import from CSV</a></div>
+      <a class="btn primary" href="#/import" data-go="import">Import from CSV</a>
       <div style="margin-top:10px"><a class="btn" href="#/new" data-go="new">Add a client</a></div></div>`;
     return;
   }
@@ -434,7 +433,6 @@ function viewSettings() {
       <button class="icon-btn" data-back>‹ Back</button><h2>Settings</h2><span style="width:64px"></span>
     </div></div>
     <p class="note" style="margin:4px 4px 16px">Your clients and calls are saved only on this phone. Export a backup every so often so nothing is lost if the phone is reset.</p>
-    <button class="menu-item" data-starter>Load my clients<small>Adds your client list with the code. Never duplicates anyone.</small></button>
     <button class="menu-item" data-go="import">Import clients from CSV<small>Bring in your Google Sheet. You'll see a preview first.</small></button>
     <button class="menu-item" id="expClients">Export clients (CSV)</button>
     <button class="menu-item" id="expCalls">Export calls (CSV)</button>
@@ -589,64 +587,56 @@ function drawImport() {
   };
 }
 
-/* ========== "Load my clients": Eli's client list, encrypted so the public page doesn't reveal it ========== */
-const STARTER = {
-  salt: '6305df84ed4414d9aac21277d78bb254',
-  iv: 'c715e7833244243bd5d851a9',
-  data:
-    '864ff12b5ff672e225346c13249cc27289425c8d6f196d08ef829e019da6e190cff145b67f7f547d4aadf2715161dd4699b19e78d22a0101cd56b2fe09059151f00eb66edf3695ece8c9c95130349e842c46e01de504ce22389b25d368e8c2adadaaaf0051b2c26704759044a05d46057ba9ead8ffcfd1286dc200f386a5d2dd036b5bded5de8d1d819dd7ae3ca4fda612c8861324fe14c664ae9e412a306ff5ab87d32398c005df478650871b59400cb6cccd17f73a17ce843f90fb11d326d59fea7ccb9066d1ed550a98370e0d24d428b04059644087abf1ef5441678f6a818ce68a624dc841fc75fc375f8f7a078fff16e1ed4f3246f9a8ce0301a811d90b9793ac357f527eb35f366feaed5b5cc6d1458ed878fa68a6a5cf4ccba0441556a39b293f08e7877fd402c06a' +
-    '82c4bcae632cd2d4b86c8c4edd14b8ab5254ca81f9c0c807dc6e49caba80b52600db0fff4ac52d2fc242a78508e11649d446eec4bd9ffd317ec09fc974f6f3102239f0635098dadb23343b0885fd136b09db0d63ca579ffe843f58dda2fb1169596135a1f258d2635a61c386407065369c6bac97d2daa4ca5e1d325d49b3ef0f6bb78fac0ab75557675bb745bafd2f147a164549f93d0d2acfe62451a0a6c820eae4c67d1f53314fbd603c8f0ba86ceb8ec19526aea1a7f3cd768cc88abce4a07759783c0febbc93f6729ac47a653ad22d399484aee09c9c34480116c0bd27c8c52420b6a04e77d8891567b0f06e072130dc577c3cccc8235d47d94327601cdcec6dc7f0d616f1ea86e521a8f8a9bdb4c41c977242228af0900980a498f3f8d9f16c20c529f0039ff95a4085' +
-    '7ee8699377d3590741787e104bb1f3a76830c8a70119f3553d291c126a440e5fe345bd9b1fe48d5430615c0e5bb8abad9768ba82397d5a339be492fafd7988ad6df02ac43eb8f554dde18128423117c51f64b92d7e0387431aa0ee986e64ff5da81367730272799fef98705ac269178b7cfd8fdd5fe155a9aa630bc3265d5035da54dda04df3c77f8ef6369ae8cecaed2f8248ab5858432d5d5b2a69641d0e7b366d8312b50f36d1b2e52462b618139b0b6f821db19c68dac027b26644af7ea7a593cad270f44b308a782a0672c7c3241f777de6645ce916d9dfb109ca1f163798903965e367c46fd32986d85ff5bbf495b6efc8588e7424c8db88ead39242f93f4d12786f3efcbbec8d0ce1fe1d0488fafe772f76bc4eb8d8efa5b00cf4e50752fa3f49ffa5d6a32288deda' +
-    'f87a4af6a0b304a7e851b29e70452841aad793d4ba5b9a710bfc3289d467d69e1565b5b3f50d79887cdae6091a4fad384bcd9585545769b2ce8e5f0503e9e19b2aafab2b1336a97e34dc1fda3de9b8b137dd9a6d03b816bd8c9264a5aac70144b6a07ac03a866c1c426ac44019649427c8be2502c50fdbe2b1deb8dd01fe9fd57e49e1d2d2f7d208896693021478b095943215d7e135a0f832c2434b406c175b2d985d1082ef633d35b2914f03ad659760ab899429fdc8443dd658d44e2e9170494cf4afbf32085df7f9241fc8e7986d1d7b3eadafe459d9db75a1467bb34d50dded29d7e65d8765c9975ea6404daccd5589c5912ad3dbcb48919a1f74873cf97a5745840de5cc058a88313a28188e7249617fb61e8326d812af59b6da411f9cf9e8ed464ab09aadf6a4f58e' +
-    'df7fea2fd940a5e2897863835c52069bbe48134071b631f3b948c844f0973503c2d7212cdcc4f03075f4648b5c3ad74187a24a9afa08e9a527b7f216527613aee38ef86ea6f5060a6d1ee466f8387cba39446357fa347e6c4fb432056a5ee5762078385396e7ce55b68e8a488bad79576a3ad9189ac69d24c5e86154d45cd31240d5ac2761557285daf1d5470a1fab060dcc2ef0b3bd6c31c14829c65840fb051005347d86442ac2dd9771801059d30275ba00f81d5fc1445fd5c42af3cdc6639b5e9cf0ec4684b1e010e5b2cd4d66f80306996fac6c24a0e84316e39e930d7f10421eae0f7cc4319310dca216f2b7ba739db8bb82857f1f3dc7367aaa2dccdc1c74fdb9c18c0a7740fc3a5bbf0c150fccf0e80b1a04b2086f8d117a92653a59e787fde94dc777b5b4aa34c7' +
-    '10b2bd1725353c0dd491b9985236e076233c204c6fa5fcbc78c9c705c5344e931f4720b570c851f5dbd26061bc1da0c19a162776a0ada2851f26cea3c272370618c2e70d1f038f5f2d279bf4e4bb2fdadf88e5ff4df570f624abc21768f2d2e69cfc9c769d40ffc1d0a3ef0b4252d2b0c0413cf3cfdbc4a36bb1c503ab6a06519a6e1eeb7bf5f17701483798594e1613fa77c895881f31ecb82fb82195900677f249e363726efc4223beab341ba4f1652c41e6babc8c819b622748b3bc75e03e67f39839b4ccdd2769c53d5399f23ebc2cbb87f1a2fc6cb3cfea8e6b0ee4895dc5e74dcb9169c172b761c857c8397564e958c2d6af92ec558a3c039ddf40d9f539e134485a16f26e58dbde5a30492afd59f1f7c7db407833c9258fd3389543a324f57bbde8406967a0f40865' +
-    '5e60a7d597115882da35bcb0586e0fd6372c0e60b1ef4d93b478193114b1506c70133f010ec1733cddaf8b6bf1c30110b5cd07c84ce2530c1516a954440863fc5a4f944a13d94051bfde74507210489c0b7ea2902ec53eca3938a586e2aad048277070fef0633cbb4cccff6c6981e043822c4eba8a71d9852ebd331df89fec3d8ad06da2e1b3e2c5aee19e5773dfa8fb5641f5aeb1007f49ff33fbe341b2b481df4f70a4815a7d4ca6fb4d6de69222788f4224b8461ddc65f18dbe0b296e0698a8957f8dd9cc82170185e09733b5bfea0834d3b84592af5a6b2d92111960b74274047d1ea8879bd67deb2d113c538888985d2a723a7c55ff768cea747f1782d25d10438b142aefd81237c7cdb2b6375a326987caa041d3b8b4a28ba835dfefd6f60d3e0ee58212c49c1698b3' +
-    '58f2ab08acfdcbcd82d2c33660974e41e1df1ee8099b86de1401921d58da6c81ab023cac4bc124426a8fd7c034a4df82a1e65fcc118097a3665527413092832a52398bb4ec0559155ed531c9dea125421d6c92d71025045bb7571b6ff7f009b616e687c311c3558f071734e1e5c04f227f7b919e7c2554e6bc115700121acfd498222d6b1ecd5cfd7de9581cab624e5f2c2673ce6f53092144e05f94660713bf1e08a0f40aa6d80d047d3ab20392d921c5120d1d49f5e594a81cfb5334630530965387190eb6fa427f4f46614be2f81c39f80049335b6f5e94f2fae2b2f5bdba02263b58eaca59f5306471e199128edb3120a9cb88210ecb96252f8e9597890683e16ff5695f71541096637c6859832ba3b836dc64fc173afe5a4b558131428dba7c4d4f447b2ee1aa16138d' +
-    'c24ff7c75fc627f054e8910ec97960ec01936c83ec6fc2b463a68f7cae8bcd4821bdae0a053a1696d14c4ea748dadb10240e51520dde71edfef6199b3f4c8ba68c8e0fd7976ad80f58f3ddd730b250c9db8420c3c07aa057bab543f26280814ba7d1b853777e0dfc46f8b3b7b9da6a714174dcf0754c592852fbdb7b4cdb63d57066601adf803c3897d0310e94f0bf880939ffa764b617fd73c21d4042a9c258669269ea884f82294a799e3b87208d863d44e251377caeb06cb4bef618e1044907f79028b08f9438d3c6d19ce82ee3e8bd18644708b61cc2b26d3a',
-};
-const unhex = (h) => new Uint8Array(h.match(/../g).map((b) => parseInt(b, 16)));
-async function unlockStarter(code) {
-  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(code.trim().toLowerCase()), 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: unhex(STARTER.salt), iterations: 250000, hash: 'SHA-256' }, km, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unhex(STARTER.iv) }, key, unhex(STARTER.data));
-  return JSON.parse(new TextDecoder().decode(plain));
-}
-// adds clients you don't have yet; for ones you do, only fills in blank phone/email/Loom/notes
-function mergeClients(list) {
+/* ========== Eli's clients from Money Tracker: added automatically the first time this version opens ========== */
+const CLIENT_LIST_VERSION = 5;
+const CLIENT_LIST = [
+  ['Swimme & Son Building Contractors, Inc.', ['Swimme & Son'], 'Mark Swimme'],
+  ['Aspen Home Improvements', ['Aspen Windows'], 'Matthew'],
+  ['C. Michael Exteriors & Luxury Bath', ['C Michael Exteriors'], 'Samuel'],
+  ['Renken Remodeling', ['Renken Industries'], 'Brent'],
+  ['Cloud 9 Tubs', [], 'Jeff'],
+  ['Bath Planet (NW Bath Specialists)', ['Bath Planet'], 'Kasey'],
+  ['United Better Homes', [], 'Brian'],
+  ['Kingdom Vision Builders / Bath Planet of Southern Idaho', ['KVB USA'], 'Tony'],
+  ['Preferred Home Services', [], 'Meghan'],
+  ['Legacy Design and Remodeling', ['Legacy Design & Remodeling'], 'Brian/Zac'],
+  ['Bacon Home Remodeling', ['Built By Bacon'], 'Andy Bacon'],
+  ['Jay Bee Contracting', [], 'Greg Hahn'],
+  ['Gold Standard Bathrooms', [], 'Kenneth Criso'],
+  ['Midway Remodeling', [], 'Armani Dahani'],
+  ['ABC Windows', ['abcwin.com'], 'Matt'],
+  ['Vista Home Improvement', [], 'Brian'],
+  ['Ground Up Development', [], 'Sean Yousefi'],
+  ['GC Makeovers', [], 'Fred Garrity'],
+  ['Bay State Bath', [], 'Jennifer'],
+  ['Fletch Interiors', [], 'Keith'],
+  ['Carden Home Improvement LLC', [], 'Mou'],
+  ['Signature Home Worx', [], 'Paul Buchta'],
+].map(([name, aka, contact]) => ({ name, aka, notes: 'Contact: ' + contact }));
+
+// adds clients you don't have yet; for ones you do, renames old names and only fills in blank fields
+function mergeClients(list, opts = {}) {
   let added = 0, updated = 0; const now = new Date().toISOString();
   for (const c of list) {
-    // match by current name or any older name it went by, so a renamed client is never duplicated
     const names = [c.name, ...(c.aka || [])].map((n) => String(n).toLowerCase());
     const ex = db.clients.find((x) => names.includes(x.name.toLowerCase()));
-    if (!ex) { db.clients.push({ id: uid(), name: c.name, phone: c.phone || '', email: c.email || '', loom: c.loom || '', notes: c.notes || '', archived: !!c.archived, createdAt: now }); added++; continue; }
+    if (!ex) { db.clients.push({ id: uid(), name: c.name, phone: c.phone || '', email: c.email || '', loom: c.loom || '', notes: c.notes || '', archived: false, createdAt: now }); added++; continue; }
     let changed = false;
     if (ex.name !== c.name) { ex.name = c.name; changed = true; }
-    if (c.archived && !ex.archived) { ex.archived = true; changed = true; }
+    if (opts.unarchive && ex.archived) { ex.archived = false; changed = true; }
     const fills = ['phone', 'email', 'loom', 'notes'].filter((f) => c[f] && !ex[f]);
     fills.forEach((f) => (ex[f] = c[f]));
     if (changed || fills.length) updated++;
   }
   save(); return { added, updated };
 }
-function openStarter() {
-  openSheet(`
-    <h3>Load my clients</h3><p class="sub">Type the code Claude gave you. You only do this once.</p>
-    <label class="f"><span>Code</span><input class="input" id="sCode" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="10 letters and numbers"></label>
-    <div class="stack"><button class="btn primary block" id="sGo">Load clients</button></div>
-    <button class="link-btn" id="sX">Cancel</button>`, () => {
-    const go = async () => {
-      const btn = $('#sGo'); btn.disabled = true; btn.textContent = 'Loading…';
-      try {
-        const r = mergeClients(await unlockStarter($('#sCode').value));
-        closeSheet(); toast(r.added || r.updated ? `Added ${r.added} client${r.added === 1 ? '' : 's'}${r.updated ? `, updated ${r.updated}` : ''}` : 'Your clients are already loaded');
-        history.replaceState({ d: 0 }, '', '#/'); render();
-      } catch (e) { btn.disabled = false; btn.textContent = 'Load clients'; toast("That code didn't work. Check it and try again."); }
-    };
-    $('#sGo').onclick = go;
-    $('#sCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-    $('#sX').onclick = closeSheet;
-    setTimeout(() => $('#sCode').focus(), 50);
-  });
+function autoLoadClients() {
+  let done = 0;
+  try { done = +localStorage.getItem('csm-calls-client-list') || 0; } catch (e) {}
+  if (done >= CLIENT_LIST_VERSION) return;
+  const r = mergeClients(CLIENT_LIST, { unarchive: true });
+  try { localStorage.setItem('csm-calls-client-list', String(CLIENT_LIST_VERSION)); } catch (e) {}
+  if (r.added) setTimeout(() => toast(`Added ${r.added} client${r.added === 1 ? '' : 's'} from Money Tracker`), 400);
 }
 
 /* ========== bottom sheets ========== */
@@ -743,9 +733,8 @@ function openEditCall(callId) {
 
 /* ========== taps ========== */
 document.addEventListener('click', (e) => {
-  const el = e.target.closest('[data-go],[data-back],[data-call],[data-log],[data-editcall],[data-agree],[data-tab],[data-open-client],[data-starter]');
+  const el = e.target.closest('[data-go],[data-back],[data-call],[data-log],[data-editcall],[data-agree],[data-tab],[data-open-client]');
   if (!el) return;
-  if ('starter' in el.dataset) { e.preventDefault(); return openStarter(); }
   if (el.dataset.agree) { e.preventDefault(); return openAgreement(el.dataset.agree, !!el.closest('#list')); }
   if ('tab' in el.dataset) { e.preventDefault(); history.replaceState(history.state, '', '#/' + el.dataset.tab); return render(); }
   if (el.dataset.openClient) { e.preventDefault(); closeSheet(); return go('c/' + el.dataset.openClient); }
@@ -767,6 +756,7 @@ function toast(msg) {
   document.body.appendChild(t); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), 2200);
 }
 
+autoLoadClients();
 render();
 checkPending();
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
